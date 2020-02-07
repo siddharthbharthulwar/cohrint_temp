@@ -1,8 +1,11 @@
+from math import pi, hypot, sin, cos, atan2, degrees, radians
+
 def norm_angle(a):
     # Normalize the angle to be between -pi and pi
     return (a+pi)%(2*pi) - pi
 
 def computeArcs(pos1, pos2, theta_0, s, t_0):
+    theta_0 = radians(theta_0)
     x_0 = pos1[0]
     y_0 = pos1[1]
     x_1 = pos2[0]
@@ -27,6 +30,7 @@ def computeArcs(pos1, pos2, theta_0, s, t_0):
         "y_C": y_C,
         "r_C": r_C,
         "t_0": t_0,
+        "t_1": t_1,
         "theta_0": theta_0,
         "omega": omega
 
@@ -50,3 +54,15 @@ def orientation(t, ret):
     theta_0 = ret["theta_0"]
     omega = ret["omega"]
     return omega * (t - t_0) + theta_0
+
+def totalcomputation(pos0, pos1, t_0, theta_0, s):
+    ret = computeArcs(pos0, pos1, theta_0, s, t_0)
+    positions = []
+    headings = []
+    for t in range(t_0, int(ret["t_1"]) + 1):
+        positions.append(position(t, ret))
+        headings.append((orientation(t, ret)))
+    return positions, headings
+
+print(totalcomputation((0, 0), (500, 500), 0, 15, 10)[1])
+
