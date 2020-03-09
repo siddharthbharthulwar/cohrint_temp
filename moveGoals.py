@@ -21,7 +21,7 @@ drone_x = 0
 drone_y = 0 
 
 z = -30
-velocity = 25 #Max speed without vertical jerks
+velocity = 10 #Max speed without vertical jerks
 
 
 
@@ -113,14 +113,14 @@ def stop(msg):
     client.moveByVelocityAsync(0, 0, 0, 10, vehicle_name="Drone1")
 
 def state_callback(data):
+    global drone_x, drone_y
     drone_x = data.pose.position.x
     drone_y = data.pose.position.y
 
 def movetoGoal(msg):
     global realPathX, realPathY
     print("Callback")
-    state_sub = rospy.Subscriber("/Drone1/pose", PoseStamped, state_callback)
-    print(drone_x, drone_y)
+
     path = []
     plotx = []
     ploty = []
@@ -130,61 +130,63 @@ def movetoGoal(msg):
     pltDroneY = []
 
     if (arc):
-        #positions = makelists((drone_x, drone_y), (msg.x[0], msg.y[0]), 0, 15, 10)[0]
-        positions = [(0, 0), (100, 0), (100, 150)]
-        positions = [(0, 0), (25, 0), (50, 25), (75, 75), (50, 100), (25, 75), (0, 0)]
+        state_sub = rospy.Subscriber("/Drone1/pose", PoseStamped, state_callback)
+        print(drone_x, drone_y)
+        positions = makelists((drone_x, drone_y), (msg.x[0], msg.y[0]), 0, 15, 10)[0]
         print(positions)
         for i in range(0, len(msg.x)): #assumes length of message to be 1
             print(msg.x[i])
             print(msg.y[i])
             print(len(positions), " positions added to path")
             for k in range(0, len(positions)):
-                #print(k)
-                #print(positions[k][0], positions[k][1])
-                #print(type(positions[k][0]))
                 plotx.append(positions[k][0])
                 ploty.append(positions[k][1])
-               # path.insert(0, airsim.Vector3r(positions[k][0], positions[k][0], z))
                 path.append(airsim.Vector3r(positions[k][0], positions[k][1], z))
-            #print(vectList(path))
             plt.plot(plotx, ploty)
             plt.plot(realPathX, realPathY)
             plt.show()
-        for i in range(0, len(path)):
-            positionVector = client.getPosition()
-            print(positionVector)
-            path2 = [path[i]]
-            print(path2)
-            flag = False
-            client.moveOnPathAsync(path2, velocity, 2000, airsim.DrivetrainType.ForwardOnly, 
-                        airsim.YawMode(False,0), velocity + (velocity/2), 1, vehicle_name="Drone1")
-            time.sleep(15)
-            '''
-            while not flag:
-                currentPosition = client.getPosition()
 
-                pass
-            ''' 
-            pltDroneX.append(positionVector.x_val)
-            pltDroneY.append(positionVector.y_val)
-            print(pltDroneY)
+            result = client.moveOnPathAsync(path, velocity, 2000, airsim.DrivetrainType.ForwardOnly, 
+                    airsim.YawMode(False,0), 20, 1, vehicle_name="Drone1").join()
+
             
-        '''
-            currently the drone doesn't like so many points 
-        '''
-        plt.plot(plotx,ploty)
-        plt.plot(pltDroneX, pltDroneY)
-        plt.show()
+        # for i in range(0, len(path)):
+        #     path2 = [path[i]]
+        #     print(path2)
+
+        #     #client.moveToPositionAsync(drX, drY, drZ, velocity, airsim.DrivetrainType.ForwardOnly, airsim.YawMode(False, 0), velocity + (velocity/2), 1, vehicle_name= "Drone1")
+
+
+
+        #     result = client.moveOnPathAsync(path2, velocity, 2000, airsim.DrivetrainType.ForwardOnly, 
+        #                 airsim.YawMode(False,0), 20, 1, vehicle_name="Drone1").join()
+        #     time.sleep(15)
+        #     '''
+        #     while not flag:
+        #         currentPosition = client.getPosition()
+
+        #         pass
+        #     '''
+        #     pltDroneX.append(drone_x)
+        #     pltDroneY.append(drone_y)
+        #     print(pltDroneY)
+            
+        # plt.plot(plotx,ploty)
+        # plt.plot(pltDroneX, pltDroneY)
+        # plt.show()
 
     else:
-
+        '''
         for i in range(0, len(msg.x)):
             print(msg.x[i])
             print(msg.y[i])
             path.append(airsim.Vector3r(msg.x[i], msg.y[i], z))
-
-        client.moveOnPathAsync(path, velocity, 2000, airsim.DrivetrainType.ForwardOnly, 
-                    airsim.YawMode(False,0), velocity + (velocity/2), 1, vehicle_name="Drone1")
+        '''
+        path = [airsim.Vector3r(125,0,z),
+                                airsim.Vector3r(125,130,z),
+                                airsim.Vector3r(0,130,z)]    
+        result = client.moveOnPathAsync(path, velocity, 2000, airsim.DrivetrainType.ForwardOnly, 
+                    airsim.YawMode(False,0), 20, 1, vehicle_name="Drone1").join()
 
     # x, y = msg.x, msg.y
 
